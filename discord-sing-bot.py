@@ -98,23 +98,21 @@ async def play_music(interaction, query):
 
 
 async def play_queue(interaction, vc):
+    """큐가 있을 때 다음 곡 자동 재생"""
     while queue:
         title, url = queue.pop(0)
-
-        # 핵심 변경: Opus 기반 스트림
-        source = FFmpegOpusAudio(
+        source = discord.FFmpegOpusAudio(
             url,
-            before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-            options="-vn"
+            executable="/usr/bin/ffmpeg",
+            **FFMPEG_OPTIONS
         )
-
-        await asyncio.sleep(1)  # Railway 환경 안정화용 딜레이
+        
         vc.play(source)
-
         await interaction.followup.send(f"🎵 **지금 재생 중:** `{title}`")
 
         while vc.is_playing():
             await asyncio.sleep(1)
+
 
 
 # ----------------------
