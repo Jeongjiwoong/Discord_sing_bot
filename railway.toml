@@ -1,0 +1,13 @@
+[build]
+builder = "Nixpacks"
+
+[deploy]
+startCommand = "python discord-sing-bot.py"
+
+[nixpacks]
+packages = [
+  "ffmpeg",
+  "libopus",
+  "python311",
+  "gcc"
+]
