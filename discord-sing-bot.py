@@ -21,27 +21,41 @@ queue = []
 # 🔧 FFmpeg 자동 탐색
 # ---------------------------------
 def find_ffmpeg():
-    candidates = [
-        "/usr/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-        "/bin/ffmpeg",
-    ]
-
-    # PATH 기반 검색
-    for path in os.getenv("PATH", "").split(":"):
-        full_path = os.path.join(path, "ffmpeg")
-        if os.path.exists(full_path) and os.access(full_path, os.X_OK):
-            return full_path
-
-    # Linux 환경에서 which ffmpeg 시도
+    # 1) which ffmpeg
     try:
         result = subprocess.run(["which", "ffmpeg"], stdout=subprocess.PIPE, text=True)
         if result.stdout.strip():
+            print(f"[DEBUG] ffmpeg found via 'which': {result.stdout.strip()}")
             return result.stdout.strip()
     except:
         pass
-    
+
+    # 2) Search common linux locations
+    common_paths = [
+        "/usr/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+        "/bin/ffmpeg",
+        "/root/.nix-profile/bin/ffmpeg"
+    ]
+
+    for p in common_paths:
+        if os.path.exists(p) and os.access(p, os.X_OK):
+            print(f"[DEBUG] ffmpeg found via common path: {p}")
+            return p
+
+    # 3) Full recursive scan under /nix/store (Railway case)
+    try:
+        result = subprocess.run(["find", "/nix/store", "-name", "ffmpeg"], stdout=subprocess.PIPE, text=True)
+        if result.stdout.strip():
+            found = result.stdout.strip().split("\n")[0]
+            print(f"[DEBUG] ffmpeg found in /nix/store: {found}")
+            return found
+    except:
+        pass
+
+    print("❌ No ffmpeg found!")
     return None
+
 
 
 FFMPEG_EXECUTABLE = find_ffmpeg()
