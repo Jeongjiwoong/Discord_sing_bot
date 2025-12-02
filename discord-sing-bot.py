@@ -70,9 +70,10 @@ def load_opus():
         "/usr/lib/libopus.so.0",
         "/usr/lib/x86_64-linux-gnu/libopus.so.0",
         "/lib/x86_64-linux-gnu/libopus.so.0",
-        "/nix/store",
+        "/nix/store"  # fallback search root for replit
     ]
 
+    # 1) 정상 Linux 경로 검사
     for path in search_paths:
         try:
             discord.opus.load_opus(path)
@@ -81,7 +82,20 @@ def load_opus():
         except:
             pass
 
+    # 2) Replit: nix-store full scan
+    try:
+        result = subprocess.run(["find", "/nix/store", "-name", "libopus.so*"], stdout=subprocess.PIPE, text=True)
+        libpath = result.stdout.strip().split("\n")[0]
+        if libpath:
+            discord.opus.load_opus(libpath)
+            print(f"[OK] Opus loaded from Nix store: {libpath}")
+            return True
+    except Exception as e:
+        print("[ERROR] Couldn't load opus:", e)
+
+    print("❌ Opus failed to load.")
     return False
+
 
 
 if not discord.opus.is_loaded():
